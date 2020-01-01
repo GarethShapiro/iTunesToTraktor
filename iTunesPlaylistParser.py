@@ -1,7 +1,14 @@
 import xml.etree.ElementTree as ET
+import os
+
 #from iTunesTrack import iTunesTrack
 
 class iTunesPlaylistParser:
+
+	iTunesTree = None
+	trackRepository = dict()
+
+	outputPlaylistsFolderPath = "./output-playlists"
 
 	def __init__(self, *args):
 
@@ -9,9 +16,10 @@ class iTunesPlaylistParser:
 
 		if self.validateInput(iTunesLibraryPath):
 
-			tree = self.getTree(iTunesLibraryPath)
-			playlists = self.getPlaylists(tree)
+			self.iTunesTree = self.getTree(iTunesLibraryPath)
+			playlists = self.getPlaylists(self.iTunesTree)
 
+			self.preparePlaylistsFolder()
 			self.printPlaylist(playlists, True)
 
 	def getiTunesLibraryPath(self, args):
@@ -47,7 +55,7 @@ class iTunesPlaylistParser:
 
 	def getPlaylists (self, tree):
 
-		print("iTunesParser is starting to parse the xml tree.")
+		print("iTunesParser is starting to parse the xml tree for playlists.")
 
 		root = tree.getroot()
 		targetPlaylistList = []
@@ -64,10 +72,25 @@ class iTunesPlaylistParser:
 				if element.tag == "key" and element.text == "Master":
 					self.isMaster = True
 
-			if self.isDistinguishedKind == False and self.isMaster == False:
+				if element.tag == "key" and element.text == "Folder":
+					self.isFolder = True
+
+				if element.tag == "key" and element.text == "Smart Info":
+					self.isSmartInfo = True
+
+
+			if (self.isDistinguishedKind == False and 
+			    self.isMaster == False and 
+			    self.isFolder == False and 
+			    self.isSmartInfo == False):
+
 				targetPlaylistList.append(playlist)
 
 		return targetPlaylistList
+
+	def preparePlaylistsFolder(self):
+
+		os.mkdir(self.outputPlaylistsFolderPath, 0o755)
 
 	def printPlaylist(self, playlistList, showTunes = False):
 
@@ -78,11 +101,23 @@ class iTunesPlaylistParser:
 			for element in playlist:
 
 				if self.isNameNext == True:
-					print(element.text)
+					
+					nameHighlight = ""
 
-				if self.isNameNext == True and showTunes == True:
-					print("----------")
-					self.getTracks(playlist)
+					for i in range(len(element.text)):
+						nameHighlight += "-"
+
+					print(nameHighlight)
+					print(element.text)
+					print(nameHighlight)
+
+					if showTunes == True:
+						
+						playlistTracks = self.getPlaylistTracks(playlist)
+
+						if playlistTracks is not None:
+							for trackName in playlistTracks:
+								print(trackName)
 
 				self.resetPlaylistFlags()
 
@@ -93,87 +128,79 @@ class iTunesPlaylistParser:
 
 		self.isMaster = False
 		self.isDistinguishedKind = False
+		self.isFolder = False
+		self.isSmartInfo = False
 
 		self.isNameNext = False
 
+	def getPlaylistTracks(self, playlist):
 
-	def getTracks(self, playlist):
+		playlistTracks = []
 
 		for track in playlist.findall("./array/dict[key='Track ID']"):
+			
 			trackId = track.find("integer").text
-			print(f"Track ID = {trackId}")
+			trackName = self.trackNameFromTrackRepository(trackId)
 
-	def resetTracksFlags(self):
+			if trackName is not None:
+				playlistTracks.append(trackName)
+			else:
+				trackName = self.getTrack(self.iTunesTree, trackId)
 
-		self
-	'''
+				if trackName is not None:
+					playlistTracks.append(trackName)
+
+		if len(playlistTracks) > 0:
+			return playlistTracks
+
+		return None
+
+	def trackNameFromTrackRepository(self, trackId):
+
+		try:
+			return self.trackRepository[trackId]
+		except KeyError: 
+			return None
+
+	def getTrack(self, tree, trackId):
+
+		root = tree.getroot()
+		targetPlaylistList = []
 
 		for track in root.findall("./dict/dict/dict[key='Track ID']"):
+			
+			self.resetTracksFlags()
 
-			targetTrack = iTunesTrack()
-			self.resetPlaylistFlags()
+			trackName = ""
+			id = ""
 
 			for element in track:
 
 				if self.isNameNext == True:
-					targetTrack.name = element.text
-			
-				if self.isDateAddedNext == True:
-					targetTrack.dateAdded = element.text
-			
-				if self.isPlayCountNext == True:
-					targetTrack.playCount = element.text
-			
-				if self.isPlayDateNext == True:
-					targetTrack.playDate = element.text
+					trackName = element.text
 
-				if self.isRatingNext == True:
-					targetTrack.rating = element.text
+				if self.isIdNext == True:
+					id = element.text
 
-				if self.isRatingComputedNext == True:
-					if element.tag == "true":
-						targetTrack.rating = 0
-
-				if self.isLocationNext == True:
-					targetTrack.location = element.text
-			
-				self.resetPlaylistFlags()
+				self.resetTracksFlags()
 
 				if element.tag == "key" and element.text == "Name":
 					self.isNameNext = True
 
-				if element.tag == "key" and element.text == "Date Added":
-					self.isDateAddedNext = True
+				if element.tag == "key" and element.text == "Track ID":
+					self.isIdNext = True
 
-				if element.tag == "key" and element.text == "Play Count":
-					self.isPlayCountNext = True
+			if id == trackId:
 
-				if element.tag == "key" and element.text == "Play Date":
-					self.isPlayDateNext = True
+				targetPlaylistList.append(trackName)
 
-				if element.tag == "key" and element.text == "Rating":
-					self.isRatingNext = True
+		if len(targetPlaylistList) > 0:
+			return targetPlaylistList
 
-				if element.tag == "key" and element.text == "Rating Computed":
-					self.isRatingComputedNext = True
+		return None
 
-				if element.tag == "key" and element.text == "Location":
-					self.isLocationNext = True
+	def resetTracksFlags(self):
 
-			if ".Trash" not in targetTrack.location:
-				targetTrackList.append(targetTrack) 
-
-		print("iTunesParser has finished parsing the xml file")
-		return targetTrackList
-
-	resetPlaylistFlags()
-
-	def resetPlaylistFlags(self):
+		self.isIdNext = False
 		self.isNameNext = False
-		self.isDateAddedNext = False
-		self.isPlayCountNext = False
-		self.isPlayDateNext = False
-		self.isRatingNext = False
-		self.isRatingComputedNext = False
-		self.isLocationNext = False
-'''
+
