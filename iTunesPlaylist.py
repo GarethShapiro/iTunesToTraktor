@@ -1,0 +1,3 @@
+class iTunesPlaylist:
+
+	name = None

@@ -1,1 +1,4 @@
 /output-playlists
+/__pycache__/iTunesPlaylistParser.cpython-37.pyc
+/__pycache__/iTunesPlaylistFileManager.cpython-37.pyc
+/__pycache__/iTunesPlaylist.cpython-37.pyc
