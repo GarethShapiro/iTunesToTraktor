@@ -1,7 +1,5 @@
 import os
 
-#from iTunesTrack import iTunesTrack
-
 class iTunesPlaylistFileManager:
 
 	outputPlaylistsFolderPath = "./output-playlists"

@@ -34,7 +34,7 @@ class iTunesPlaylistParser:
 
 		if len(iTunesLibraryPath) < 1:
 
-			print ("\nImplausible path to iTunes playlist.\n")
+			print ("\nImplausible path to iTunes Library.\n")
 			return False
 
 		return True

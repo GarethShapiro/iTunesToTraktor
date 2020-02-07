@@ -1,0 +1,3 @@
+class TraktorPlaylist:
+
+	name = None
