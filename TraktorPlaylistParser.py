@@ -1,58 +1,61 @@
-import pdb;
+import sys
+from Utilities.Terminal import Terminal
 
 import xml.etree.ElementTree as ET
+
 from TraktorPlaylist import TraktorPlaylist
 
 class TraktorPlaylistParser:
 
-	playlists = None
+	traktorLibraryPath = None
+	playlists = []
 	traktorTree = None
 
 	def __init__(self, *args):
 	
+		self.validateInput(args)
+
+		try:
+
+			self.traktorTree = self.getTree(self.traktorLibraryPath)
+			
+		except FileNotFoundError:
+
+			Terminal.fail(f"There doesn't seem to be a file at {self.traktorLibraryPath}", True)
+			sys.exit()
+
+		self.playlists = self.createPlaylists(self.traktorTree)
+		Terminal.ok(f"TraktorPlaylistParser found {len(self.playlists)} playlists.")
+
+	def validateInput(self, args):
+
 		numberOfArgs = len(args)
 
-		if(numberOfArgs == 2):
+		if(numberOfArgs == 1):
 
 			traktorLibraryPath = str(args[0])
-			playlists = list(args[1])
-
-#			if playlists != None:
-			#for playlist in playlists:
-			#	print(f"playlist.name == {playlist.name}")
 
 			if len(traktorLibraryPath) > 1:
 
-				try:
-					self.traktorTree = self.getTree(traktorLibraryPath)
-					self.playlists = self.createPlaylists(self.traktorTree)
-
-					if self.playlists != None:
-						for playlist in self.playlists:
-
-							print(f"-- {playlist.attrib.get('NAME')}")
-
-				except FileNotFoundError:
-
-					print(f"There doesn't seem to be a file at {traktorLibraryPath}")
+				self.traktorLibraryPath = traktorLibraryPath
 
 			else:
 
-				print ("\nImplausible path to Traktor Library.\n")
-
+				Terminal.fail("Implausible path to Traktor Library.", True)
+				sys.exit()
 		else:
 
-			print (f"TraktorPlaylistParser was expecting 2 argument and {numberOfArgs} was recieved.\n")
+			Terminal.fail("TraktorPlaylistParser was expecting 2 argument and {numberOfArgs} was recieved.", True)
+			sys.exit()
 
 	def getTree(self, traktorLibraryPath):
 
-		print("TraktorPlaylist is starting to get the XML tree.")
-		
+		Terminal.info("TraktorPlaylist is starting to get the XML tree.")
 		return ET.parse(traktorLibraryPath)
 
 	def createPlaylists (self, tree):
 
-		print("TraktorPlaylistParser is starting to parse the xml tree for playlists.")
+		Terminal.info("TraktorPlaylistParser is starting to parse the xml tree for playlists.")
 
 		root = tree.getroot()
 		targetPlaylistList = []
@@ -65,7 +68,10 @@ class TraktorPlaylistParser:
 
 				if name[:1] != "_":
 
-					targetPlaylistList.append(element)
+					traktorPlaylist = TraktorPlaylist()
+					traktorPlaylist.name = element.attrib.get('NAME')
+
+					targetPlaylistList.append(traktorPlaylist)
 
 		return targetPlaylistList
 

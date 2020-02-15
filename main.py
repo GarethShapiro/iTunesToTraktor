@@ -6,9 +6,14 @@ from TraktorPlaylistParser import TraktorPlaylistParser
 iTunesParser = iTunesPlaylistParser("./iTunes.xml")
 iTunesPlaylists = iTunesParser.playlists
 
+traktorParser = TraktorPlaylistParser("./collection.nml")
+traktorPlaylists = TraktorPlaylistParser.playlists
+
+
+
 fileManager = iTunesPlaylistFileManager()
 fileManager.prepareTempPlaylistsFolder()
 fileManager.createTempPlaylists(iTunesPlaylists)
 
-traktorParser = TraktorPlaylistParser("./collection.nml", iTunesPlaylists)
+
 

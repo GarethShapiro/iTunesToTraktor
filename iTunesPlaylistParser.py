@@ -1,4 +1,5 @@
 import pdb;
+from Utilities.Terminal import Terminal
 
 import xml.etree.ElementTree as ET
 from iTunesPlaylist import iTunesPlaylist
@@ -18,6 +19,8 @@ class iTunesPlaylistParser:
 			self.iTunesTree = self.getTree(iTunesLibraryPath)
 			self.playlists = self.createPlaylists(self.iTunesTree)
 
+			Terminal.ok(f"iTunesParser found {len(self.playlists)} playlists.")
+
 	def getiTunesLibraryPath(self, args):
 
 		numberOfArgs = len(args)
@@ -27,31 +30,32 @@ class iTunesPlaylistParser:
 
 		else:
 
-			print (f"iTunesPlaylistParser was expecting 1 argument and {numberOfArgs} was recieved. \n")
-			return ""
+			Terminal.fail(f"iTunesPlaylistParser was expecting 1 argument and {numberOfArgs} was recieved.", True)
+			sys.exit()
 
 	def validateInput(self, iTunesLibraryPath):
 
 		if len(iTunesLibraryPath) < 1:
 
-			print ("\nImplausible path to iTunes Library.\n")
-			return False
+			Terminal.fail("Implausible path to iTunes Library.", True)
+			sys.exit()
 
 		return True
 
 	def getTree(self, iTunesLibraryPath):
 
-		print("iTunesParser is starting to get the XML tree.")
+		Terminal.info("iTunesParser is starting to get the XML tree.")
 		
 		try:
 			return ET.parse(iTunesLibraryPath)
 
 		except FileNotFoundError:
-			print(f"There doesn't seem to be a file at {iTunesLibraryPath}")
+			Terminal.fail("There doesn't seem to be a file at {iTunesLibraryPath}", True)
+			sys.exit()
 
 	def createPlaylists (self, tree):
 
-		print("iTunesParser is starting to parse the xml tree for playlists.")
+		Terminal.info("iTunesParser is starting to parse the xml tree for playlists.")
 
 		root = tree.getroot()
 		targetPlaylistList = []
@@ -80,8 +84,6 @@ class iTunesPlaylistParser:
 			    self.isFolder == False and 
 			    self.isSmartInfo == False):
 
-				#pdb.set_trace()
-
 				iTunesPlaylist = self.createiTunesPlaylist(playlist)
 				targetPlaylistList.append(iTunesPlaylist)
 
@@ -106,24 +108,9 @@ class iTunesPlaylistParser:
 
 			if self.isNameNext == True:
 				
-				#nameHighlight = ""
-
-				#for i in range(len(element.text)):
-					#nameHighlight += "-"
-
-				#print(nameHighlight)
 				newPlaylist.name = element.text
-				#print(nameHighlight)
 
-				#if showTunes == True:
-					
-					#playlistTracks = self.getPlaylistTracks(playlist)
-
-					#if playlistTracks is not None:
-						#for trackName in playlistTracks:
-							#print(trackName)
-
-				self.resetPlaylistFlags()
+				break
 
 			if element.tag == "key" and element.text == "Name":
 

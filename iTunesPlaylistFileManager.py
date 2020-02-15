@@ -1,4 +1,5 @@
 import os
+from Utilities.Terminal import Terminal
 
 class iTunesPlaylistFileManager:
 
@@ -6,14 +7,14 @@ class iTunesPlaylistFileManager:
 
 	def prepareTempPlaylistsFolder(self):
 
-		print(f"iTunesPlaylistFileManager is attempting to make a folder {self.outputPlaylistsFolderPath}.")
+		Terminal.info(f"iTunesPlaylistFileManager is attempting to make a folder {self.outputPlaylistsFolderPath}.")
 
 		if not os.path.exists(self.outputPlaylistsFolderPath):
 			os.mkdir(self.outputPlaylistsFolderPath, 0o755)
 
 	def createTempPlaylists(self, playlists):
 
-		print("iTunesPlaylistFileManager is starting to create temp playlists.")
+		Terminal.info(f"iTunesPlaylistFileManager is starting to create temp playlists.")
 
 		if playlists != None:
 
@@ -21,13 +22,13 @@ class iTunesPlaylistFileManager:
 				self.createEmptyTempPlaylistFile(playlist)
 
 		else:
-			print("However the list of playlists passed was empty")
-			
+			Terminal.warning("However the list of playlists passed was empty")
+
+		Terminal.ok(f"iTunesPlaylistFileManager created {len(playlists)} empty temporary playlists.")
+
 	def createEmptyTempPlaylistFile(self, playlist):
 
 		fileName = playlist.name.lower().replace(" ", "-")
 		filePath = self.outputPlaylistsFolderPath + "/" + fileName + ".xml"
-
-		print(f"iTunesPlaylistFileManager is attempting to create {filePath}")
 
 		open(filePath, 'w').close()
