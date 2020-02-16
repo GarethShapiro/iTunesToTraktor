@@ -39,10 +39,5 @@ class Terminal:
 
     def __init__(self, string, ownline):
 
-        if ownline == True: 
-            print("\n")
-
-        print(string)
-
-        if ownline == True: 
-            print("\n")
+        delimeter = "\n" if ownline == True else ""
+        print(delimeter + string + delimeter)

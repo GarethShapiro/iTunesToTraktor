@@ -7,13 +7,8 @@ iTunesParser = iTunesPlaylistParser("./iTunes.xml")
 iTunesPlaylists = iTunesParser.playlists
 
 traktorParser = TraktorPlaylistParser("./collection.nml")
-traktorPlaylists = TraktorPlaylistParser.playlists
-
-
+traktorPlaylists = traktorParser.playlists
 
 fileManager = iTunesPlaylistFileManager()
 fileManager.prepareTempPlaylistsFolder()
-fileManager.createTempPlaylists(iTunesPlaylists)
-
-
-
+fileManager.createTempPlaylists(iTunesPlaylists, traktorPlaylists)

@@ -1,4 +1,6 @@
 import os
+import shutil
+
 from Utilities.Terminal import Terminal
 
 class iTunesPlaylistFileManager:
@@ -11,22 +13,43 @@ class iTunesPlaylistFileManager:
 
 		if not os.path.exists(self.outputPlaylistsFolderPath):
 			os.mkdir(self.outputPlaylistsFolderPath, 0o755)
+		else:
+			self.__emptyPlaylistsFolder()
 
-	def createTempPlaylists(self, playlists):
+	def __emptyPlaylistsFolder(self):
+
+		for root, dirs, files in os.walk(self.outputPlaylistsFolderPath):
+
+		    for f in files:
+		        os.unlink(os.path.join(root, f))
+
+		    for d in dirs:
+		        shutil.rmtree(os.path.join(root, d))
+
+	def createTempPlaylists(self, iTunesPlaylists, traktorPlaylists):
 
 		Terminal.info(f"iTunesPlaylistFileManager is starting to create temp playlists.")
 
-		if playlists != None:
+		numberOfPlaylists = 0
 
-			for playlist in playlists:
-				self.createEmptyTempPlaylistFile(playlist)
+		if iTunesPlaylists != None:
+
+			for playlist in iTunesPlaylists:
+
+				tNames = [tPlaylist.name for tPlaylist in traktorPlaylists]
+				
+				if playlist.name in tNames:
+					
+					self.__createEmptyTempPlaylistFile(playlist)
+					numberOfPlaylists += 1
 
 		else:
+			
 			Terminal.warning("However the list of playlists passed was empty")
 
-		Terminal.ok(f"iTunesPlaylistFileManager created {len(playlists)} empty temporary playlists.")
+		Terminal.ok(f"iTunesPlaylistFileManager created {numberOfPlaylists} empty temporary playlists.")
 
-	def createEmptyTempPlaylistFile(self, playlist):
+	def __createEmptyTempPlaylistFile(self, playlist):
 
 		fileName = playlist.name.lower().replace(" ", "-")
 		filePath = self.outputPlaylistsFolderPath + "/" + fileName + ".xml"
