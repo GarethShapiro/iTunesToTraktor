@@ -30,24 +30,39 @@ class iTunesPlaylistFileManager:
 
 		Terminal.info(f"iTunesPlaylistFileManager is starting to create temp playlists.")
 
-		numberOfPlaylists = 0
+		playlistsCreated = []
+		playlistsSkipped = []
 
 		if iTunesPlaylists != None:
 
 			for playlist in iTunesPlaylists:
 
 				tNames = [tPlaylist.name for tPlaylist in traktorPlaylists]
-				
+
 				if playlist.name in tNames:
-					
-					self.__createEmptyTempPlaylistFile(playlist)
-					numberOfPlaylists += 1
+
+					emptyPlaylistFilePath = self.__createEmptyTempPlaylistFile(playlist)
+					playlistsCreated.append(emptyPlaylistFilePath)
+
+				else:
+
+					playlistsSkipped.append(playlist.name)
 
 		else:
-			
+
 			Terminal.warning("However the list of playlists passed was empty")
 
-		Terminal.ok(f"iTunesPlaylistFileManager created {numberOfPlaylists} empty temporary playlists.")
+		Terminal.ok(f"iTunesPlaylistFileManager created {len(playlistsCreated)} empty temporary playlists:")
+
+		for createdPlaylist in playlistsCreated:
+			Terminal.ok(f"	{createdPlaylist}")
+
+		if len(playlistsSkipped) > 0:
+
+			Terminal.warning(f"iTunesPlaylistFileManager skipped {len(playlistsSkipped)} iTunes playlists that weren't in the Traktor DB:")
+
+			for skippedPlaylist in playlistsSkipped:
+				Terminal.warning(f"	{skippedPlaylist}")
 
 	def __createEmptyTempPlaylistFile(self, playlist):
 
@@ -55,3 +70,5 @@ class iTunesPlaylistFileManager:
 		filePath = self.outputPlaylistsFolderPath + "/" + fileName + ".xml"
 
 		open(filePath, 'w').close()
+
+		return filePath
