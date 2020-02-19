@@ -1,10 +1,15 @@
+from __future__ import print_function, unicode_literals
+
 import os
+import sys
 import shutil
 
+from PyInquirer import prompt, print_json
 from Utilities.Terminal import Terminal
 
-class iTunesPlaylistFileManager:
+class FileManager:
 
+	# Temp Playlist
 	outputPlaylistsFolderPath = "./output-playlists"
 
 	def prepareTempPlaylistsFolder(self):
@@ -72,3 +77,35 @@ class iTunesPlaylistFileManager:
 		open(filePath, 'w').close()
 
 		return filePath
+
+	# Copying Files
+	def getPaths(self):
+
+		questions = [
+			{
+				'type': 'input',
+ 				'name': 'itunes_parent_folder',
+				'message': 'What is the parent iTunes folder?',
+			}
+			,
+			{
+				'type': 'input',
+				'name': 'traktor_parent_folder',
+				'message': 'What is the parent Traktor folder?',
+			}
+		]
+
+		return prompt(questions)
+
+	def diffTunes(self, pathList, iTunesPlaylists, traktorPlaylists):
+
+		if 'itunes_parent_folder' not in pathList or 'traktor_parent_folder' not in pathList:
+			Terminal.fail("Either the iTunes or the Traktor parent folder missing.")
+			sys.exit()
+
+		iTunesParentFolder = pathList
+
+		Terminal.info(pathList)
+
+
+

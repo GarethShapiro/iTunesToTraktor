@@ -85,7 +85,9 @@ class iTunesPlaylistParser:
 			    self.isSmartInfo == False):
 
 				iTunesPlaylist = self.createiTunesPlaylist(playlist)
-				targetPlaylistList.append(iTunesPlaylist)
+
+				if iTunesPlaylist != None:
+					targetPlaylistList.append(iTunesPlaylist)
 
 		return targetPlaylistList
 
@@ -98,13 +100,15 @@ class iTunesPlaylistParser:
 
 		self.isNameNext = False
 
-	def createiTunesPlaylist(self, playlist):
+	def createiTunesPlaylist(self, tree):
+
+		Terminal.info("iTunesParser is creating a new iTunes playlist.")
 
 		self.resetPlaylistFlags()
 
 		newPlaylist = iTunesPlaylist()
 
-		for element in playlist:
+		for element in tree:
 
 			if self.isNameNext == True:
 				
@@ -116,29 +120,43 @@ class iTunesPlaylistParser:
 
 				self.isNameNext = True
 
+		if newPlaylist.name == None:
+			Terminal.warning("Missing playlist name, skipping")
+			return None
+
+		Terminal.info(f"iTunesParser created {newPlaylist.name}.")
+
+		newPlaylist = self.getPlaylistTracks(tree, newPlaylist)
+
 		return newPlaylist
 
-	def getPlaylistTracks(self, playlist):
+	# In iTunes playlist xml the tracks are stored separately from playlists which just references ids.
+	# This method first finds ids before calling getTrack()
+	def getPlaylistTracks(self, tree, playlist):
+
+		Terminal.info(f"iTunesParser is getting tunes for {playlist.name}.")
 
 		playlistTracks = []
 
-		for track in playlist.findall("./array/dict[key='Track ID']"):
+		for track in tree.findall("./array/dict[key='Track ID']"):
 			
 			trackId = track.find("integer").text
 			trackName = self.trackNameFromTrackRepository(trackId)
 
 			if trackName is not None:
 				playlistTracks.append(trackName)
+				Terminal.info(f"Added {trackName} from track repository.")
 			else:
 				trackName = self.getTrack(self.iTunesTree, trackId)
 
 				if trackName is not None:
 					playlistTracks.append(trackName)
+					Terminal.info(f"Added {trackName}.")
 
 		if len(playlistTracks) > 0:
-			return playlistTracks
+			playlist.tracks = playlistTracks
 
-		return None
+		return playlist
 
 	def trackNameFromTrackRepository(self, trackId):
 
@@ -147,6 +165,8 @@ class iTunesPlaylistParser:
 		except KeyError: 
 			return None
 
+	# In iTunes playlist xml the tracks are stored separately from playlists which just references ids.
+	# This method finds an actual track once an id has been isolated.
 	def getTrack(self, tree, trackId):
 
 		root = tree.getroot()
@@ -174,6 +194,8 @@ class iTunesPlaylistParser:
 
 				if element.tag == "key" and element.text == "Track ID":
 					self.isIdNext = True
+
+			self.trackRepository[id] = trackName
 
 			if id == trackId:
 
