@@ -126,7 +126,7 @@ class iTunesPlaylistParser:
 
 		Terminal.info(f"iTunesParser created {newPlaylist.name}.")
 
-		newPlaylist = self.getPlaylistTracks(tree, newPlaylist)
+		newPlaylist.tracks = self.getPlaylistTracks(tree, newPlaylist)
 
 		return newPlaylist
 
@@ -153,10 +153,7 @@ class iTunesPlaylistParser:
 					playlistTracks.append(trackName)
 					Terminal.info(f"Added {trackName}.")
 
-		if len(playlistTracks) > 0:
-			playlist.tracks = playlistTracks
-
-		return playlist
+		return playlistTracks
 
 	def trackNameFromTrackRepository(self, trackId):
 
@@ -199,10 +196,7 @@ class iTunesPlaylistParser:
 
 			if id == trackId:
 
-				targetPlaylistList.append(trackName)
-
-		if len(targetPlaylistList) > 0:
-			return targetPlaylistList
+				return trackName
 
 		return None
 
