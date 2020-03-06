@@ -4,8 +4,11 @@ import os
 import sys
 import shutil
 
+import xml.etree.ElementTree as ET
+
 from PyInquirer import prompt, print_json
 from Utilities.Terminal import Terminal
+
 
 class FileManager:
 
@@ -44,14 +47,25 @@ class FileManager:
 				emptyPlaylistFilePath = self.__createEmptyTempPlaylistFile(playlist)
 				playlistsCreated.append(emptyPlaylistFilePath)
 
+
+				tree = TreeBuilder()
+				tree.start("playlist")
+				xml = tree.close()
+
+				
+
+				for track in playlist.tracks:
+
+					Terminal.info(f"{playlist.name} :: {track.name} - {track.artist} [{track.genre}] [{track.location}]")
+
 		else:
 
 			Terminal.warning("However the list of iTunesPlaylists passed was empty")
 
 		Terminal.ok(f"iTunesPlaylistFileManager created {len(playlistsCreated)} empty temporary playlists:")
 
-		for createdPlaylist in playlistsCreated:
-			Terminal.ok(f"	{createdPlaylist}")
+		#for createdPlaylist in playlistsCreated:
+			
 
 	def __createEmptyTempPlaylistFile(self, playlist):
 
@@ -59,6 +73,8 @@ class FileManager:
 		filePath = self.outputPlaylistsFolderPath + "/" + fileName + ".xml"
 
 		open(filePath, 'w').close()
+
+		Terminal.ok(f"	{filePath}")
 
 		return filePath
 
