@@ -4,7 +4,9 @@ import os
 import sys
 import shutil
 
-import xml.etree.ElementTree as ET
+from xml.etree import ElementTree
+from xml.etree.ElementTree import Element, SubElement
+from xml.dom import minidom
 
 from PyInquirer import prompt, print_json
 from Utilities.Terminal import Terminal
@@ -44,20 +46,31 @@ class FileManager:
 
 			for playlist in iTunesPlaylists:
 
-				emptyPlaylistFilePath = self.__createEmptyTempPlaylistFile(playlist)
-				playlistsCreated.append(emptyPlaylistFilePath)
+				emptyPlaylistFilePath = self.__createEmptyTempPlaylistFilePath(playlist)
 
-
-				tree = TreeBuilder()
-				tree.start("playlist")
-				xml = tree.close()
-
+				playlistXML = Element('playlist')
 				
-
 				for track in playlist.tracks:
 
-					Terminal.info(f"{playlist.name} :: {track.name} - {track.artist} [{track.genre}] [{track.location}]")
+					trackXML = SubElement(playlistXML, 'track')
+					nameXML = SubElement(trackXML, 'name')
+					nameXML.text = track.name
+					artistXML = SubElement(trackXML, 'artist')
+					artistXML.text = track.artist
+					genreXML = SubElement(trackXML, 'genre')
+					genreXML.text = track.genre
+					locationXML = SubElement(trackXML, 'location')
+					locationXML.text = track.location
 
+					#Terminal.info(f"{playlist.name} :: {track.name} - {track.artist} [{track.genre}] [{track.location}]")
+				prettyXMLString = self.__prettifyXml(playlistXML)
+
+				with open(emptyPlaylistFilePath, "w") as newPlaylistFile:
+					print(prettyXMLString, file=newPlaylistFile)
+
+				playlistsCreated.append(emptyPlaylistFilePath)
+
+				
 		else:
 
 			Terminal.warning("However the list of iTunesPlaylists passed was empty")
@@ -66,15 +79,16 @@ class FileManager:
 
 		#for createdPlaylist in playlistsCreated:
 			
+	def __prettifyXml(self, topElement):
 
-	def __createEmptyTempPlaylistFile(self, playlist):
+		rough_string = ElementTree.tostring(topElement, 'utf-8')
+		reparsed = minidom.parseString(rough_string)
+		return reparsed.toprettyxml(indent="  ")
+
+	def __createEmptyTempPlaylistFilePath(self, playlist):
 
 		fileName = playlist.name.lower().replace(" ", "-")
 		filePath = self.outputPlaylistsFolderPath + "/" + fileName + ".xml"
-
-		open(filePath, 'w').close()
-
-		Terminal.ok(f"	{filePath}")
 
 		return filePath
 
@@ -106,6 +120,4 @@ class FileManager:
 		iTunesParentFolder = pathList
 
 		Terminal.info(pathList)
-
-
 
