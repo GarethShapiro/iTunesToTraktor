@@ -1,10 +1,12 @@
 from __future__ import print_function, unicode_literals
 
+import pdb
+
 import os
 import sys
 import shutil
 
-from xml.etree import ElementTree
+from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement
 from xml.dom import minidom
 
@@ -62,7 +64,6 @@ class FileManager:
 					locationXML = SubElement(trackXML, 'location')
 					locationXML.text = track.location
 
-					#Terminal.info(f"{playlist.name} :: {track.name} - {track.artist} [{track.genre}] [{track.location}]")
 				prettyXMLString = self.__prettifyXml(playlistXML)
 
 				with open(emptyPlaylistFilePath, "w") as newPlaylistFile:
@@ -70,18 +71,17 @@ class FileManager:
 
 				playlistsCreated.append(emptyPlaylistFilePath)
 
-				
 		else:
 
 			Terminal.warning("However the list of iTunesPlaylists passed was empty")
 
 		Terminal.ok(f"iTunesPlaylistFileManager created {len(playlistsCreated)} empty temporary playlists:")
 
-		#for createdPlaylist in playlistsCreated:
-			
+		return playlistsCreated
+
 	def __prettifyXml(self, topElement):
 
-		rough_string = ElementTree.tostring(topElement, 'utf-8')
+		rough_string = ET.tostring(topElement, 'utf-8')
 		reparsed = minidom.parseString(rough_string)
 		return reparsed.toprettyxml(indent="  ")
 
@@ -92,7 +92,6 @@ class FileManager:
 
 		return filePath
 
-	# Copying Files
 	def getPaths(self):
 
 		questions = [
@@ -111,13 +110,48 @@ class FileManager:
 
 		return prompt(questions)
 
-	def diffTunes(self, pathList, iTunesPlaylists, traktorPlaylists):
+	def copyTunestoTraktorPath(self, pathList, tempPlaylists):
 
 		if 'itunes_parent_folder' not in pathList or 'traktor_parent_folder' not in pathList:
 			Terminal.fail("Either the iTunes or the Traktor parent folder missing.")
 			sys.exit()
 
-		iTunesParentFolder = pathList
+		iTunesParentFolder = pathList["itunes_parent_folder"]
+		traktorParentFolder = pathList["traktor_parent_folder"]
 
-		Terminal.info(pathList)
+		#assume for now that all iTunes tracks are under the same parent folder so 
+		#just map the path to the corresponding Traktor folder once
 
+
+		for playlist in tempPlaylists:
+
+			playlistRoot = self.__getTree(playlist).getroot()
+			
+			for track in playlistRoot.findall("./track"):
+
+				for element in track:
+				
+					if element.tag == "location":
+						Terminal.info(self.__mapTraktorPath(element.text, traktorParentFolder))
+
+	def __getTree(self, xmlFilePath):
+
+		try:
+			return ET.parse(xmlFilePath)
+
+		except FileNotFoundError:
+			Terminal.fail("There doesn't seem to be a file at {xmlFilePath}", True)
+			sys.exit()
+
+	def __mapTraktorPath(self, iTunesPath, traktorParentFolder):
+
+		traktorParentFolder = "/Users/garethshapiro/Music/Tunes"
+
+		noProtocolPath = os.path.relpath(iTunesPath, "file:///")
+		iTunesPathItems = noProtocolPath.split("/")
+
+		tracktorPathItems = traktorParentFolder.split("/")
+
+		breakpoint()
+
+	#def __mappediTunesParentFolder(self):

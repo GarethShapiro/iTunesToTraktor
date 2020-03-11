@@ -13,8 +13,7 @@ iTunesPlaylists = iTunesParser.playlists
 
 fileManager = FileManager()
 fileManager.prepareTempPlaylistsFolder()
-fileManager.createTempPlaylists(iTunesPlaylists)
+tempPlaylists = fileManager.createTempPlaylists(iTunesPlaylists)
 
 parentFolderPaths = fileManager.getPaths()
-
-fileManager.diffTunes(parentFolderPaths, iTunesPlaylists, traktorPlaylists)
+fileManager.copyTunestoTraktorPath(parentFolderPaths, tempPlaylists)
