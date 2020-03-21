@@ -113,6 +113,7 @@ class FileManager:
 	def copyTunestoTraktorPath(self, pathList, tempPlaylists):
 
 		if 'itunes_parent_folder' not in pathList or 'traktor_parent_folder' not in pathList:
+
 			Terminal.fail("Either the iTunes or the Traktor parent folder missing.")
 			sys.exit()
 
@@ -121,7 +122,6 @@ class FileManager:
 
 		#assume for now that all iTunes tracks are under the same parent folder so 
 		#just map the path to the corresponding Traktor folder once
-
 
 		for playlist in tempPlaylists:
 
@@ -134,6 +134,8 @@ class FileManager:
 					if element.tag == "location":
 						Terminal.info(self.__mapTraktorPath(element.text, traktorParentFolder))
 
+
+
 	def __getTree(self, xmlFilePath):
 
 		try:
@@ -145,13 +147,39 @@ class FileManager:
 
 	def __mapTraktorPath(self, iTunesPath, traktorParentFolder):
 
+		#dev data
 		traktorParentFolder = "/Users/garethshapiro/Music/Tunes"
+		iTunesPath = "/None/No"
 
 		noProtocolPath = os.path.relpath(iTunesPath, "file:///")
 		iTunesPathItems = noProtocolPath.split("/")
 
-		tracktorPathItems = traktorParentFolder.split("/")
+		traktorPathItems = traktorParentFolder.split("/")
+		traktorPathItems = self.__cleanPathItems(traktorPathItems)
+
+		i = self.__syncPaths(iTunesPathItems, traktorPathItems)
 
 		breakpoint()
 
-	#def __mappediTunesParentFolder(self):
+	def __cleanPathItems(self, pathItems):
+
+		itemsToRemove = [""]
+
+		for remove in itemsToRemove:
+
+			if remove in pathItems:
+				pathItems.remove(remove)
+
+		return pathItems
+
+	def __syncPaths(self, iTunesPathItems, traktorPathItems):
+
+		try:
+			iTunesMusicIndex = iTunesPathItems.index("Music")
+		except ValueError:
+			Terminal.fail(f"There doesn't appear to be a 'Music' folder in the iTunes path: \n {''.join((items + '/') + for items in iTunesPathItems)}", True)
+			sys.exit()
+
+		return iTunesMusicIndex
+		#for iTunesItems in iTunesPathItems:
+
