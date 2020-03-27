@@ -6,6 +6,11 @@ import os
 import sys
 import shutil
 
+from urllib.parse import urlparse
+from urllib.parse import unquote
+
+from collections import namedtuple
+
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement
 from xml.dom import minidom
@@ -13,6 +18,7 @@ from xml.dom import minidom
 from PyInquirer import prompt, print_json
 from Utilities.Terminal import Terminal
 
+ITunesPathData = namedtuple('ITunesPathData', ['path', 'file'])
 
 class FileManager:
 
@@ -120,7 +126,7 @@ class FileManager:
 		iTunesParentFolder = pathList["itunes_parent_folder"]
 		traktorParentFolder = pathList["traktor_parent_folder"]
 
-		#assume for now that all iTunes tracks are under the same parent folder so 
+		#assume for now that all iTunes tracks are under the same parent folder, called Music
 		#just map the path to the corresponding Traktor folder once
 
 		for playlist in tempPlaylists:
@@ -129,12 +135,17 @@ class FileManager:
 			
 			for track in playlistRoot.findall("./track"):
 
+				lastPath = ""
+
 				for element in track:
 				
 					if element.tag == "location":
-						Terminal.info(self.__mapTraktorPath(element.text, traktorParentFolder))
+						
+						targetTraktorPath = self.__targetTraktorPath(element.text, traktorParentFolder)
+						lastPath = targetTraktorPath
 
-
+						# this is where the folder creating is going to happen
+						breakpoint()
 
 	def __getTree(self, xmlFilePath):
 
@@ -145,11 +156,11 @@ class FileManager:
 			Terminal.fail("There doesn't seem to be a file at {xmlFilePath}", True)
 			sys.exit()
 
-	def __mapTraktorPath(self, iTunesPath, traktorParentFolder):
+	def __targetTraktorPath(self, iTunesPath, traktorParentFolder):
 
 		#dev data
 		traktorParentFolder = "/Users/garethshapiro/Music/Tunes"
-		iTunesPath = "/None/No"
+		#iTunesPath = "/None/No"
 
 		noProtocolPath = os.path.relpath(iTunesPath, "file:///")
 		iTunesPathItems = noProtocolPath.split("/")
@@ -157,9 +168,8 @@ class FileManager:
 		traktorPathItems = traktorParentFolder.split("/")
 		traktorPathItems = self.__cleanPathItems(traktorPathItems)
 
-		i = self.__syncPaths(iTunesPathItems, traktorPathItems)
-
-		breakpoint()
+		#iTunes seems to url encode urls
+		return unquote(self.__syncPaths(iTunesPathItems, traktorPathItems))
 
 	def __cleanPathItems(self, pathItems):
 
@@ -174,12 +184,46 @@ class FileManager:
 
 	def __syncPaths(self, iTunesPathItems, traktorPathItems):
 
+		iTunesPathData = self.__iTunesPathData(iTunesPathItems)
+		trimmedTraktorPathItems = self.__trimTraktorPath(traktorPathItems)
+
+		syncedPathItems = trimmedTraktorPathItems + iTunesPathData.path
+
+		return "".join(["/" + item for item in syncedPathItems]) + "/"
+		
+	def __iTunesPathData(self, iTunesPathItems):
+
 		try:
-			iTunesMusicIndex = iTunesPathItems.index("Music")
+			iTunesMusicIndex = iTunesPathItems.index("Music") # TODO: This needs to be more sophisticated 
 		except ValueError:
-			Terminal.fail(f"There doesn't appear to be a 'Music' folder in the iTunes path: \n {''.join((items + '/') + for items in iTunesPathItems)}", True)
+
+			constructPath = "".join(["/" + item for item in iTunesPathItems if item != '..'])
+			Terminal.fail(f"There doesn't appear to be a 'Music' folder in the iTunes path: \n{constructPath}", True)
 			sys.exit()
 
-		return iTunesMusicIndex
-		#for iTunesItems in iTunesPathItems:
+		numiTunesPathItems = len(iTunesPathItems)
 
+		# Remove the file from the path
+		if numiTunesPathItems > 0:
+
+			numiTunesPathItems -= 1
+			return ITunesPathData(file = "", path = iTunesPathItems[iTunesMusicIndex:numiTunesPathItems])
+
+		else:
+
+			# if for some reason the file was found in the top folder. 
+			# TODO: This needs testing
+			Terminal.fail(f"Unhandled iTunes file at the top folder.")
+			sys.exit()
+
+	def __trimTraktorPath(self, traktorPathItems):
+
+		try:
+			traktorMusicIndex = traktorPathItems.index("Music") # TODO: This needs to be more sophisticated 
+		except ValueError:
+
+			constructPath = "".join(["/" + item for item in traktorPathItems if item != '..'])
+			Terminal.fail(f"There doesn't appear to be a 'Music' folder in the Traktor path: \n{constructPath}", True)
+			sys.exit()
+
+		return traktorPathItems[0:traktorMusicIndex]
