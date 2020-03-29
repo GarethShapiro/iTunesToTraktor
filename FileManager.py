@@ -6,6 +6,8 @@ import os
 import sys
 import shutil
 
+from pathlib import Path
+
 from urllib.parse import urlparse
 from urllib.parse import unquote
 
@@ -17,6 +19,7 @@ from xml.dom import minidom
 
 from PyInquirer import prompt, print_json
 from Utilities.Terminal import Terminal
+
 
 ITunesPathData = namedtuple('ITunesPathData', ['path', 'file'])
 
@@ -128,24 +131,30 @@ class FileManager:
 
 		#assume for now that all iTunes tracks are under the same parent folder, called Music
 		#just map the path to the corresponding Traktor folder once
-
 		for playlist in tempPlaylists:
 
 			playlistRoot = self.__getTree(playlist).getroot()
 			
-			for track in playlistRoot.findall("./track"):
+			lastPath = ""
 
-				lastPath = ""
+			for track in playlistRoot.findall("./track"):
 
 				for element in track:
 				
 					if element.tag == "location":
 						
 						targetTraktorPath = self.__targetTraktorPath(element.text, traktorParentFolder)
-						lastPath = targetTraktorPath
 
-						# this is where the folder creating is going to happen
-						breakpoint()
+						if targetTraktorPath != lastPath:
+							
+							lastPath = targetTraktorPath
+
+							try:
+								Path(targetTraktorPath).mkdir(parents=False, exist_ok=False)
+							except FileExistsError:
+								Terminal.info(f"Folder already existed at {targetTraktorPath}")	
+							else:
+								Terminal.info(f"Folder created at {targetTraktorPath}")
 
 	def __getTree(self, xmlFilePath):
 
